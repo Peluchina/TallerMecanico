@@ -20,13 +20,28 @@ namespace TallerMecanico.Application.Commands
         public async Task<ProductGetResponse?> UpdateStatus(ProductUpdateStatusCommand command)
         {
             var validationResult = await _validator.ValidateAsync(command);
+
             if (!validationResult.IsValid)
             {
                 throw new ValidationException(validationResult.Errors);
             }
 
-            var updated = await _repository.UpdateStatus(command.Params.ProductId, command.Request.ProductStatus);
-            if (updated == null) return null;
+            string productStatus = command.Request.ProductStatus switch
+            {
+                "0" => "ACTIVO",
+                "1" => "INACTIVO",
+                _ => throw new ValidationException(
+                    "El estado del producto no es válido."
+                )
+            };
+
+            var updated = await _repository.UpdateStatus(
+                command.Params.ProductId,
+                productStatus
+            );
+
+            if (updated == null)
+                return null;
 
             return new ProductGetResponse
             {
