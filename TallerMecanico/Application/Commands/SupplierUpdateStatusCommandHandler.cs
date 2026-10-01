@@ -25,7 +25,16 @@ namespace TallerMecanico.Application.Commands
                 throw new ValidationException(validationResult.Errors);
             }
 
-            var updated = await _repository.UpdateStatus(command.Params.SupplierId, command.Request.SupplierStatus);
+            string supplierStatus = command.Request.SupplierStatus switch
+            {
+                "0" => "ACTIVO",
+                "1" => "INACTIVO",
+                _ => throw new ValidationException(
+                    "El estado del proveedor no es válido."
+                )
+            };
+
+            var updated = await _repository.UpdateStatus(command.Params.SupplierId, supplierStatus);
             if (updated == null) return null;
 
             return new SupplierGetResponse
