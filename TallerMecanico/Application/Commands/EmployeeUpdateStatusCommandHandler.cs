@@ -25,7 +25,18 @@ namespace TallerMecanico.Application.Commands
                 throw new ValidationException(validationResult.Errors);
             }
 
-            var updated = await _repository.UpdateStatus(command.Params.EmployeeId, command.Request.EmployeeStatus);
+            string employeeStatus = command.Request.EmployeeStatus switch
+            {
+                "0" => "ACTIVO",
+                "1" => "INACTIVO",
+                _ => throw new ValidationException(
+                    "El estado del empleado no es válido."
+                )
+            };
+
+            var updated = await _repository.UpdateStatus(
+                command.Params.EmployeeId, 
+                employeeStatus);
             if (updated == null) return null;
 
             return new EmployeeGetResponse
