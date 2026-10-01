@@ -25,7 +25,17 @@ namespace TallerMecanico.Application.Commands
                 throw new ValidationException(validationResult.Errors);
             }
 
-            var updated = await _repository.UpdateStatus(command.Params.ServiceScheduleId, command.Request.ServiceScheduleStatus);
+            string serviceScheduleStatus = command.Request.ServiceScheduleStatus switch
+            {
+                "0" => "PENDIENTE",
+                "1" => "INACTIVO",
+                "2" => "REALIZADO",
+                _ => throw new ValidationException(
+                    "El estado de la programación no es válido."
+                )
+            };
+
+            var updated = await _repository.UpdateStatus(command.Params.ServiceScheduleId, serviceScheduleStatus);
             if (updated == null) return null;
 
             return new ServiceScheduleGetResponse

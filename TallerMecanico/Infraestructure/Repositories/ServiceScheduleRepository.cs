@@ -16,6 +16,20 @@ namespace TallerMecanico.Infraestructure.Repositories
             _connectionSQL = connectionSQL;
         }
 
+        private static StatusSchedule ParseStatus(string rawStatus)
+        {
+            if (Enum.TryParse<StatusSchedule>(rawStatus, true, out var status))
+            {
+                return status;
+            }
+
+            return rawStatus switch
+            {
+                "ACTIVO" => StatusSchedule.PENDIENTE,
+                _ => StatusSchedule.PENDIENTE
+            };
+        }
+
         public async Task<IEnumerable<ServiceSchedule>> GetAll()
         {
             var list = new List<ServiceSchedule>();
@@ -35,7 +49,7 @@ namespace TallerMecanico.Infraestructure.Repositories
                     EmployeeId = reader.GetInt64(2),
                     ServiceId = reader.GetInt64(3),
                     ScheduledDate = reader.GetDateTime(4),
-                    ServiceScheduleStatus = Enum.Parse<StatusSchedule>(reader.GetString(5))
+                    ServiceScheduleStatus = ParseStatus(reader.GetString(5))
                 });
             }
 
@@ -61,7 +75,7 @@ namespace TallerMecanico.Infraestructure.Repositories
                     EmployeeId = reader.GetInt64(2),
                     ServiceId = reader.GetInt64(3),
                     ScheduledDate = reader.GetDateTime(4),
-                    ServiceScheduleStatus = Enum.Parse<StatusSchedule>(reader.GetString(5))
+                    ServiceScheduleStatus = ParseStatus(reader.GetString(5))
                 };
             }
 
@@ -138,7 +152,7 @@ namespace TallerMecanico.Infraestructure.Repositories
                     EmployeeId = reader.GetInt64(2),
                     ServiceId = reader.GetInt64(3),
                     ScheduledDate = reader.GetDateTime(4),
-                    ServiceScheduleStatus = Enum.Parse<StatusSchedule>(reader.GetString(5))
+                    ServiceScheduleStatus = ParseStatus(reader.GetString(5))
                 };
             }
 
