@@ -52,6 +52,24 @@ namespace TallerMecanico.Infraestructure.Repositories
             return null;
         }
 
+        public async Task<Employee?> GetByEmail(string email)
+        {
+            using var connection = (SqlConnection)_connectionSQL.GetConnection();
+            await connection.OpenAsync();
+
+            using var command = new SqlCommand("dbo.usp_Employee_GetByEmail", connection);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.AddWithValue("@EmailAddress", email);
+
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return MapEmployee(reader);
+            }
+
+            return null;
+        }
+
         public async Task<long> Insert(Employee employee)
         {
             using var connection = (SqlConnection)_connectionSQL.GetConnection();
