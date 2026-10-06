@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TallerMecanico.Application.Commands;
 using TallerMecanico.Application.DTOs;
@@ -6,6 +7,7 @@ using TallerMecanico.Application.Queries;
 
 namespace TallerMecanico.Presentation.Controllers
 {
+    [Authorize(Roles = "ADMIN,RECEPCIONISTA")]
     [ApiController]
     [Route("api/[controller]")]
     public class SupplierController : ControllerBase
