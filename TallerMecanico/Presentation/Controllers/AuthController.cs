@@ -2,6 +2,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using TallerMecanico.Application.DTOs;
 using TallerMecanico.Application.Services;
+using TallerMecanico.Domain.Agregates;
 using TallerMecanico.Domain.Contracts;
 using TallerMecanico.Domain.Enums;
 
@@ -59,20 +60,25 @@ namespace TallerMecanico.Presentation.Controllers
                     picture = payload.Picture;
                 }
 
-                // Verificar existencia y estado del empleado en dbo.Employee
+                // Validar existencia del empleado estrictamente en la base de datos
                 var employee = await _employeeRepository.GetByEmail(email);
 
                 if (employee == null)
                 {
-                    return Unauthorized(new { message = $"El correo de Google '{email}' no está registrado como empleado en el taller." });
+                    return Unauthorized(new { message = $"El correo de Google '{email}' no está registrado como empleado en la base de datos del taller." });
                 }
 
                 if (employee.EmployeeStatus != Status.ACTIVO)
                 {
-                    return Unauthorized(new { message = $"El empleado '{employee.FirstName} {employee.LastName}' ({email}) no está en estado ACTIVO." });
+                    return Unauthorized(new { message = $"El empleado '{employee.FirstName} {employee.LastName}' ({email}) no se encuentra en estado ACTIVO." });
                 }
 
-                // Generar Token JWT firmado con Claims (incluyendo el Rol)
+                if (string.IsNullOrWhiteSpace(employee.Role))
+                {
+                    return Unauthorized(new { message = $"El empleado '{employee.FirstName} {employee.LastName}' ({email}) no tiene un ROL asignado en la base de datos." });
+                }
+
+                // Generar Token JWT firmado con Claims (incluyendo su Rol oficial de la BD)
                 var token = _jwtTokenService.GenerateToken(employee);
 
                 return Ok(new UserAuthResponse
@@ -91,7 +97,7 @@ namespace TallerMecanico.Presentation.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error al autenticar con Google.", details = ex.Message });
+                return StatusCode(500, new { message = "Error al autenticar con Google. Verifique la conexión a la base de datos.", details = ex.Message });
             }
         }
     }
