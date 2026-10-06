@@ -1,6 +1,11 @@
+using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using TallerMecanico.Application.Commands;
 using TallerMecanico.Application.Queries;
+using TallerMecanico.Application.Services;
 using TallerMecanico.Application.Validators;
 using TallerMecanico.Domain.Contracts;
 using TallerMecanico.Infraestructure.Data;
@@ -16,15 +21,64 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.MapType<TimeOnly>(() => new Microsoft.OpenApi.Models.OpenApiSchema
+    options.MapType<TimeOnly>(() => new OpenApiSchema
     {
         Type = "string",
         Format = "time",
         Example = new Microsoft.OpenApi.Any.OpenApiString("00:00:00")
     });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese el token JWT enviado por la API despu茅s del inicio de sesi贸n con Google (ejemplo: Bearer eyJhbGci...)"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
-// Infrastructure DI
+// Configuraci贸n de Autenticaci贸n JWT Bearer
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["SecretKey"] ?? "SuperSecretKeyForTallerMecanicoJwtAuthentication12345!";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"] ?? "TallerMecanicoAPI",
+        ValidAudience = jwtSettings["Audience"] ?? "TallerMecanicoClient",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+});
+
+// Infrastructure DI & Services
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IConnectionSQL, ConnectionSQL>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IServiceScheduleRepository, ServiceScheduleRepository>();
@@ -84,7 +138,7 @@ builder.Services.AddScoped<ServiceListQueryHandler>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CustomerCreateCommandValidator>();
 
-// Configuraci髇 CORS
+// Configuraci贸n CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularPolicy", policy =>
@@ -114,6 +168,7 @@ app.UseHttpsRedirection();
 
 app.UseCors("AngularPolicy");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

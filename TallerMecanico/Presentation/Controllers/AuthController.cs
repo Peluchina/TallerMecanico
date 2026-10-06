@@ -1,6 +1,7 @@
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using TallerMecanico.Application.DTOs;
+using TallerMecanico.Application.Services;
 using TallerMecanico.Domain.Contracts;
 using TallerMecanico.Domain.Enums;
 
@@ -12,13 +13,16 @@ namespace TallerMecanico.Presentation.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly IJwtTokenService _jwtTokenService;
 
         public AuthController(
             IConfiguration configuration,
-            IEmployeeRepository employeeRepository)
+            IEmployeeRepository employeeRepository,
+            IJwtTokenService jwtTokenService)
         {
             _configuration = configuration;
             _employeeRepository = employeeRepository;
+            _jwtTokenService = jwtTokenService;
         }
 
         [HttpPost("google-login")]
@@ -68,12 +72,17 @@ namespace TallerMecanico.Presentation.Controllers
                     return Unauthorized(new { message = $"El empleado '{employee.FirstName} {employee.LastName}' ({email}) no está en estado ACTIVO." });
                 }
 
+                // Generar Token JWT firmado con Claims (incluyendo el Rol)
+                var token = _jwtTokenService.GenerateToken(employee);
+
                 return Ok(new UserAuthResponse
                 {
+                    EmployeeId = employee.EmployeeId,
                     Email = employee.EmailAddress,
                     Name = $"{employee.FirstName} {employee.LastName}".Trim(),
+                    Role = employee.Role,
                     Picture = picture,
-                    Token = request.IdToken
+                    Token = token
                 });
             }
             catch (InvalidJwtException ex)
