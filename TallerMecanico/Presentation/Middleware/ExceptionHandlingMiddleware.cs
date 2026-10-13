@@ -68,6 +68,15 @@ namespace TallerMecanico.Presentation.Middleware
                     };
                     break;
 
+                case SqlException sqlEx when sqlEx.Number >= 50000:
+                    statusCode = HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        status = (int)statusCode,
+                        message = sqlEx.Message
+                    };
+                    break;
+
                 case KeyNotFoundException:
                     statusCode = HttpStatusCode.NotFound;
                     response = new
