@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using TallerMecanico.Application.Commands;
 using TallerMecanico.Application.DTOs;
 using TallerMecanico.Application.Parameters;
@@ -33,6 +34,13 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpGet]
+        [SwaggerOperation(Summary = "Listar productos", Description = "Obtiene la lista de productos registrados.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Lista de productos obtenida correctamente.", typeof(IEnumerable<ProductListResponse>))]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [ProducesResponseType(typeof(IEnumerable<ProductListResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<ProductListResponse>>> GetAll()
         {
             var query = new ProductListQuery();
@@ -41,6 +49,15 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpGet("{ProductId:long}")]
+        [SwaggerOperation(Summary = "Obtener producto por ID", Description = "Obtiene los datos de un producto específico por su identificador.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Operación exitosa. Datos del producto.", typeof(ProductGetResponse))]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status404NotFound, "Producto no encontrado.")]
+        [ProducesResponseType(typeof(ProductGetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductGetResponse>> GetById([FromRoute] ProductGetParams @params)
         {
             var query = new ProductGetQuery { Params = @params };
@@ -50,6 +67,17 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPost]
+        [SwaggerOperation(Summary = "Crear producto", Description = "Registra un nuevo producto en el sistema.")]
+        [SwaggerResponse(StatusCodes.Status201Created, "Producto creado correctamente.", typeof(ProductCreateResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de entrada inválidos.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status409Conflict, "Ya existe un producto con los mismos datos.")]
+        [ProducesResponseType(typeof(ProductCreateResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<ProductCreateResponse>> Create([FromBody] ProductCreateRequest request)
         {
             var command = new ProductCreateCommand { Request = request };
@@ -58,6 +86,19 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPut("{ProductId:long}")]
+        [SwaggerOperation(Summary = "Modificar producto", Description = "Actualiza los datos de un producto existente.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Producto actualizado correctamente.", typeof(ProductGetResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de entrada inválidos.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status404NotFound, "Producto no encontrado.")]
+        [SwaggerResponse(StatusCodes.Status409Conflict, "Conflicto, los datos del producto ya existen asociados a otro producto.")]
+        [ProducesResponseType(typeof(ProductGetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<ProductGetResponse>> Update(
             [FromRoute] ProductUpdateParams @params,
             [FromBody] ProductUpdateRequest request)
@@ -69,6 +110,17 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPatch("{ProductId:long}/status")]
+        [SwaggerOperation(Summary = "Actualizar estado del producto", Description = "Actualiza el estado (activo/inactivo) de un producto.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Estado del producto actualizado correctamente.", typeof(ProductGetResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de entrada inválidos.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status404NotFound, "Producto no encontrado.")]
+        [ProducesResponseType(typeof(ProductGetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductGetResponse>> UpdateStatus(
             [FromRoute] ProductUpdateStatusParams @params,
             [FromBody] ProductUpdateStatusRequest request)
