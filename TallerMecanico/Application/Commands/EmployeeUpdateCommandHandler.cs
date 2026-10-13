@@ -18,7 +18,7 @@ namespace TallerMecanico.Application.Commands
             _validator = validator;
         }
 
-        public async Task<EmployeeGetResponse?> Update(EmployeeUpdateCommand command)
+        public async Task<EmployeeUpdateResponse?> Update(EmployeeUpdateCommand command)
         {
             var validationResult = await _validator.ValidateAsync(command);
             if (!validationResult.IsValid)
@@ -42,7 +42,7 @@ namespace TallerMecanico.Application.Commands
             var updated = await _repository.Update(entity);
             if (updated == null) return null;
 
-            return new EmployeeGetResponse
+            return new EmployeeUpdateResponse
             {
                 EmployeeId = updated.EmployeeId,
                 FirstName = updated.FirstName,

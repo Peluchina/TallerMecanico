@@ -7,7 +7,8 @@ using TallerMecanico.Application.Queries;
 
 namespace TallerMecanico.Presentation.Controllers
 {
-    [Authorize(Roles = "ADMIN,MECANICO")]
+    
+    [Authorize(Roles = "ADMIN,RECEPCIONISTA,MECANICO")]
     [ApiController]
     [Route("api/[controller]")]
     public class ProductScheduleController : ControllerBase

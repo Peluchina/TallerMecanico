@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using TallerMecanico.Application.Commands;
 using TallerMecanico.Application.DTOs;
 using TallerMecanico.Application.Parameters;
@@ -7,7 +8,7 @@ using TallerMecanico.Application.Queries;
 
 namespace TallerMecanico.Presentation.Controllers
 {
-    [Authorize(Roles = "ADMIN")]
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class EmployeeController : ControllerBase
@@ -33,6 +34,14 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "ADMIN,RECEPCIONISTA")]
+        [SwaggerOperation(Summary = "Listar empleados", Description = "Obtiene la lista de empleados registrados.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Lista de empleados obtenidas correctamente.", typeof(IEnumerable<EmployeeListResponse>))]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [ProducesResponseType(typeof(IEnumerable<EmployeeListResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<EmployeeListResponse>>> GetAll()
         {
             var query = new EmployeeListQuery();
@@ -41,6 +50,16 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpGet("{EmployeeId:long}")]
+        [Authorize(Roles = "ADMIN,RECEPCIONISTA")]
+        [SwaggerOperation(Summary = "Obtener empleado por ID", Description = "Obtiene los datos de un empleado específico por su identificador.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Operación exitosa. Datos del empleado.", typeof(EmployeeGetResponse))]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status404NotFound, "Empleado no encontrado.")]
+        [ProducesResponseType(typeof(EmployeeGetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<EmployeeGetResponse>> GetById([FromRoute] EmployeeGetParams @params)
         {
             var query = new EmployeeGetQuery { Params = @params };
@@ -50,6 +69,18 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "ADMIN")]
+        [SwaggerOperation(Summary = "Crear empleado", Description = "Registra un nuevo empleado en el sistema.")]
+        [SwaggerResponse(StatusCodes.Status201Created, "Empleado creado correctamente.", typeof(EmployeeCreateResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de entrada inválidos.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status409Conflict, "Ya existe un empleado con los mismos datos.")]
+        [ProducesResponseType(typeof(EmployeeCreateResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<EmployeeCreateResponse>> Create([FromBody] EmployeeCreateRequest request)
         {
             var command = new EmployeeCreateCommand { Request = request };
@@ -58,7 +89,21 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPut("{EmployeeId:long}")]
-        public async Task<ActionResult<EmployeeGetResponse>> Update(
+        [Authorize(Roles = "ADMIN")]
+        [SwaggerOperation(Summary = "Modificar empleado", Description = "Actualiza los datos de un empleado existente.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Empleado actualizado correctamente.", typeof(EmployeeUpdateResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de entrada inválidos.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status404NotFound, "Empleado no encontrado.")]
+        [SwaggerResponse(StatusCodes.Status409Conflict, "Conflicto, los datos del empleado ya existen asociados a otro empleado.")]
+        [ProducesResponseType(typeof(EmployeeUpdateResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<EmployeeUpdateResponse>> Update(
             [FromRoute] EmployeeUpdateParams @params,
             [FromBody] EmployeeUpdateRequest request)
         {
@@ -69,6 +114,18 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPatch("{EmployeeId:long}/status")]
+        [Authorize(Roles = "ADMIN")]
+        [SwaggerOperation(Summary = "Actualizar estado del empleado", Description = "Actualiza el estado (activo/inactivo) de un empleado.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Estado del empleado actualizado correctamente.", typeof(EmployeeGetResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "Datos de entrada inválidos.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Usuario no autenticado.")]
+        [SwaggerResponse(StatusCodes.Status403Forbidden, "Usuario sin permisos.")]
+        [SwaggerResponse(StatusCodes.Status404NotFound, "Empleado no encontrado.")]
+        [ProducesResponseType(typeof(EmployeeGetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<EmployeeGetResponse>> UpdateStatus(
             [FromRoute] EmployeeUpdateStatusParams @params,
             [FromBody] EmployeeUpdateStatusRequest request)
