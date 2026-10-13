@@ -1,5 +1,6 @@
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using TallerMecanico.Application.DTOs;
 using TallerMecanico.Application.Services;
 using TallerMecanico.Domain.Agregates;
@@ -27,6 +28,15 @@ namespace TallerMecanico.Presentation.Controllers
         }
 
         [HttpPost("google-login")]
+        [SwaggerOperation(Summary = "Inicio de sesión con Google", Description = "Autentica un empleado a través del token de Google y retorna un token JWT.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Autenticación exitosa. Retorna el token JWT del empleado.", typeof(UserAuthResponse))]
+        [SwaggerResponse(StatusCodes.Status400BadRequest, "El token de Google es requerido.")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Token de Google no válido o empleado no autorizado.")]
+        [SwaggerResponse(StatusCodes.Status500InternalServerError, "Error interno al autenticar con Google.")]
+        [ProducesResponseType(typeof(UserAuthResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserAuthResponse>> GoogleLogin([FromBody] GoogleLoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.IdToken))
@@ -42,20 +52,28 @@ namespace TallerMecanico.Presentation.Controllers
                 // Modo prueba / Demo si se envía token de prueba en desarrollo
                 if (request.IdToken == "demo-token-google")
                 {
-                    email = "jhoel@gmail.com";
+                    email = "elissa.mantari@gmail.com";
                     picture = "https://lh3.googleusercontent.com/a/default-user";
                 }
                 else
                 {
                     var googleClientId = _configuration["Google:ClientId"];
-                    
-                    var settings = new GoogleJsonWebSignature.ValidationSettings();
-                    if (!string.IsNullOrEmpty(googleClientId) && googleClientId != "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
+
+                    if (string.IsNullOrWhiteSpace(googleClientId))
                     {
-                        settings.Audience = new[] { googleClientId };
+                        throw new InvalidOperationException(
+                            "Falta configurar Google:ClientId.");
                     }
 
-                    var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
+                    var settings = new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { googleClientId }
+                    };
+
+                    var payload = await GoogleJsonWebSignature.ValidateAsync(
+                        request.IdToken,
+                        settings);
+
                     email = payload.Email;
                     picture = payload.Picture;
                 }

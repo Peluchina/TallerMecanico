@@ -21,6 +21,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.EnableAnnotations();
+
     options.MapType<TimeOnly>(() => new OpenApiSchema
     {
         Type = "string",
@@ -35,7 +37,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Ingrese el token JWT enviado por la API después del inicio de sesión con Google (ejemplo: Bearer eyJhbGci...)"
+        Description = "Pegue el token JWT aquí. (Swagger añade 'Bearer ' automáticamente, pero si lo escribe también será aceptado)."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -74,6 +76,23 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"] ?? "TallerMecanicoAPI",
         ValidAudience = jwtSettings["Audience"] ?? "TallerMecanicoClient",
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var authHeader = context.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrEmpty(authHeader))
+            {
+                // Si el header contiene duplicado "Bearer Bearer " (típico en Swagger UI)
+                if (authHeader.StartsWith("Bearer Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = authHeader.Substring("Bearer Bearer ".Length).Trim();
+                }
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
